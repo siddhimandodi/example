@@ -19,4 +19,4 @@ react-native run-android
 react-native run-ios
 ```
 
-For running the APK on your device [download apk](https://github.com/siddhimandodi/example/app-release.apk)
+For running the APK on your device [download apk](https://github.com/siddhimandodi/example/blob/main/app-release.apk)
