@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   Text,
   View,
@@ -6,6 +6,9 @@ import {
   Image,
   Platform,
   Animated,
+  KeyboardAvoidingView,
+  Dimensions,
+  SafeAreaView,
 } from 'react-native';
 import {scale} from 'react-native-size-matters';
 import {colors} from '../../styleguide/color';
@@ -20,14 +23,15 @@ import Spinner from './Spinner';
 import {styles} from './styles';
 import {TextInput} from 'react-native-paper';
 import {strings} from './strings';
-import {SafeAreaView} from 'react-native-safe-area-context';
+
+const {width, height} = Dimensions.get('screen');
 
 const Login = props => {
   const inputRef = React.useRef();
-  const [showLogin, setShowLogin] = useState(false);
 
-  const loginAnimation = new Animated.Value(scale(300));
-  const brandAnimation = new Animated.Value(0);
+  const TopHalfCircleAnimation = useRef(new Animated.Value(0)).current;
+  const MiddleHalfCircleAnimation = useRef(new Animated.Value(0)).current;
+  const WholeCircleHalf = useRef(new Animated.Value(0)).current;
 
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
@@ -36,27 +40,35 @@ const Login = props => {
   const [enableSubmit, setEnableSubmit] = useState(true);
 
   useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          commonAnimation(TopHalfCircleAnimation, 1),
+          commonAnimation(MiddleHalfCircleAnimation, 1),
+        ]),
+        Animated.parallel([
+          commonAnimation(TopHalfCircleAnimation, 0),
+          commonAnimation(MiddleHalfCircleAnimation, 0),
+        ]),
+      ]),
+    ).start();
+  }, []);
+
+  const commonAnimation = (data, value) => {
+    return Animated.timing(data, {
+      toValue: value,
+      duration: 2000,
+      useNativeDriver: true,
+    });
+  };
+
+  useEffect(() => {
     if (password.length > 0 && userId.length > 0) {
       setEnableSubmit(false);
     } else {
       setEnableSubmit(true);
     }
   }, [password, userId]);
-
-  const startAnimation = () => {
-    Animated.sequence([
-      Animated.timing(brandAnimation, {
-        toValue: scale(-250),
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(loginAnimation, {
-        toValue: scale(-55),
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
 
   const validateCreds = async () => {
     setLoading(true);
@@ -72,11 +84,12 @@ const Login = props => {
     };
 
     console.log('DeviceInfo : ', _data);
+    dispatch(updateUserData(_data));
     let url = 'https://638309be6e6c83b7a98aaf20.mockapi.io/user';
     axios
       .post(url, _data)
       .then(function (response) {
-        dispatch(updateUserData(response.data));
+        // dispatch(updateUserData(response.data));
         setLoading(false);
         props.navigation.navigate('Details');
       })
@@ -86,54 +99,204 @@ const Login = props => {
   };
 
   return (
-    <SafeAreaView style={{flex: 1}}>
-      <Spinner visible={loading} />
-      <View style={styles.container}>
-        <View style={styles.parent}>
-          <View style={styles.child}>
-            {!showLogin && (
-              <Animated.View
-                style={[
-                  styles.textContainer,
-                  {transform: [{translateY: brandAnimation}]},
-                ]}>
-                <Text style={styles.title}>{strings.title}</Text>
-                <Text style={styles.description}>{strings.description}</Text>
-              </Animated.View>
-            )}
+    <KeyboardAvoidingView style={styles.container}>
+      <SafeAreaView style={styles.container}>
+        <Spinner visible={loading} />
+        <View style={styles.mainView}>
+          {/* circle layer */}
+          <Animated.View
+            style={{
+              position: 'absolute',
+              transform: [
+                {
+                  translateY: WholeCircleHalf.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, -height / 8],
+                  }),
+                },
+              ],
+            }}>
+            <Animated.View style={styles.mainDarkLayer} />
             <Animated.View
               style={[
-                styles.textContainer,
-                {transform: [{translateY: loginAnimation}]},
-              ]}>
-              <View style={styles.textFieldContainer}>
-                <TextInput
-                  mode="flat"
-                  label="User ID"
-                  style={styles.textfield}
-                  underlineColor={colors.black}
-                  activeUnderlineColor={colors.black}
-                  value={userId}
-                  onChangeText={val => setUserId(val)}
-                />
-              </View>
-              <View style={styles.textFieldContainer}>
-                <TextInput
-                  label="Password"
-                  secureTextEntry
-                  style={styles.textfield}
-                  underlineColor={colors.black}
-                  activeUnderlineColor={colors.black}
-                  value={password}
-                  onChangeText={val => setPassword(val)}
-                />
-              </View>
+                styles.middleLayer,
+                {
+                  transform: [
+                    {scaleX: 2},
+                    {scaleY: 1},
+                    {
+                      translateY: MiddleHalfCircleAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-height / 2, -height / 2.05],
+                      }),
+                    },
+                    {
+                      translateX: MiddleHalfCircleAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-width * 0.12, -width * 0.1],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.thirdLayer,
+                {
+                  height: height / 1.2,
+                  transform: [
+                    {scaleX: 2},
+                    {scaleY: 1},
+                    {
+                      translateY: TopHalfCircleAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-height / 2.2, -height / 2.1],
+                      }),
+                    },
+                    {
+                      translateX: TopHalfCircleAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-width * 0.22, -width * 0.24],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            />
+          </Animated.View>
+
+          {/* Input View */}
+          <View style={styles.textContainer}>
+            <Animated.View
+              style={{
+                opacity: WholeCircleHalf.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [1, 0],
+                }),
+                transform: [
+                  {
+                    translateY: WholeCircleHalf.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [height / 8, height / 14],
+                    }),
+                  },
+                ],
+              }}>
+              <Text style={styles.title}>{strings.title}</Text>
+              <Text style={styles.description}>{strings.description}</Text>
             </Animated.View>
-          </View>
-        </View>
-        <View style={styles.bottomContainer}>
-          {showLogin ? (
-            <>
+
+            {/* Back button */}
+            <Animated.View
+              style={[
+                {
+                  position: 'absolute',
+                  opacity: WholeCircleHalf.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 1],
+                  }),
+                  transform: [
+                    {
+                      translateY: WholeCircleHalf.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [-height / 18, -height / 5],
+                      }),
+                    },
+                  ],
+                },
+              ]}>
+              <TouchableOpacity
+                onPress={() => {
+                  inputRef.current.blur();
+                  Animated.timing(WholeCircleHalf, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                  }).start();
+                }}>
+                <Icon name="chevron-left" color={colors.white} />
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* TextInput */}
+            <Animated.View
+              style={[
+                styles.textFieldContainer,
+                {
+                  opacity: WholeCircleHalf.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 1],
+                  }),
+                  transform: [
+                    {
+                      translateY: WholeCircleHalf.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [height / 10, height / 95],
+                      }),
+                    },
+                  ],
+                },
+              ]}>
+              <TextInput
+                mode="flat"
+                label="User ID"
+                style={styles.textfield}
+                underlineColor={colors.buttonColor}
+                activeUnderlineColor={colors.buttonColor}
+                value={userId}
+                ref={inputRef}
+                onChangeText={val => setUserId(val)}
+              />
+            </Animated.View>
+            <Animated.View
+              style={[
+                styles.textFieldContainer,
+                {
+                  marginTop: 20,
+                  opacity: WholeCircleHalf.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 1],
+                  }),
+                  transform: [
+                    {
+                      translateY: WholeCircleHalf.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [height / 10, height / 225],
+                      }),
+                    },
+                  ],
+                },
+              ]}>
+              <TextInput
+                label="Password"
+                secureTextEntry
+                style={styles.textfield}
+                underlineColor={colors.buttonColor}
+                activeUnderlineColor={colors.buttonColor}
+                value={password}
+                onChangeText={val => setPassword(val)}
+              />
+            </Animated.View>
+
+            <Animated.View
+              style={[
+                {
+                  alignItems: 'center',
+                  opacity: WholeCircleHalf.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 1],
+                  }),
+                  transform: [
+                    {
+                      translateY: WholeCircleHalf.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [height / 8, height / 12],
+                      }),
+                    },
+                  ],
+                },
+              ]}>
               <TouchableOpacity
                 style={[
                   styles.loginButton,
@@ -149,34 +312,69 @@ const Login = props => {
                 }}>
                 <Text style={styles.loginText}>{strings.submit}</Text>
               </TouchableOpacity>
-              <View style={styles.forgotContainer}>
-                <TouchableOpacity>
-                  <Text style={{color: colors.buttonColor}}>
-                    {strings.forgotUserId}
-                  </Text>
-                </TouchableOpacity>
-                <Text style={styles.middle}>|</Text>
-                <TouchableOpacity>
-                  <Text style={{color: colors.buttonColor}}>
-                    {strings.forgotUserId}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity style={styles.enable}>
+            </Animated.View>
+            <Animated.View
+              style={[
+                styles.forgotContainer,
+                {
+                  opacity: WholeCircleHalf.interpolate({
+                    inputRange: [0, 0.7, 1],
+                    outputRange: [0, 0.5, 1],
+                  }),
+                  transform: [
+                    {
+                      translateY: WholeCircleHalf.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [height / 8, height / 10],
+                      }),
+                    },
+                  ],
+                },
+              ]}>
+              <TouchableOpacity>
                 <Text style={{color: colors.buttonColor}}>
-                  {strings.enableUserId}
+                  {strings.forgotUserId}
                 </Text>
               </TouchableOpacity>
-            </>
-          ) : (
-            <>
+              <Text style={styles.middle}>|</Text>
+              <TouchableOpacity>
+                <Text style={{color: colors.buttonColor}}>
+                  {strings.forgotUserId}
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+
+          <View style={styles.bottomContainer}>
+            <Animated.View
+              style={[
+                {
+                  alignItems: 'center',
+                  opacity: WholeCircleHalf.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [1, 0],
+                  }),
+                  transform: [
+                    {
+                      translateY: WholeCircleHalf.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, -height / 6],
+                      }),
+                    },
+                  ],
+                },
+              ]}>
               <TouchableOpacity
                 style={styles.loginButton}
                 onPress={() => {
-                  startAnimation();
+                  Animated.timing(WholeCircleHalf, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                  }).start();
                   setTimeout(() => {
-                    setShowLogin(true);
-                  }, 300);
+                    inputRef.current.focus();
+                  }, 400);
                 }}>
                 <Text style={styles.loginText}>{strings.login}</Text>
               </TouchableOpacity>
@@ -189,11 +387,11 @@ const Login = props => {
                   <Text style={styles.quickBal}>{strings.quickBal}</Text>
                 </View>
               </TouchableOpacity>
-            </>
-          )}
+            </Animated.View>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 

@@ -1,25 +1,41 @@
-import {StyleSheet} from 'react-native';
+import {StyleSheet, Dimensions} from 'react-native';
 import {scale} from 'react-native-size-matters';
 import {colors} from '../../styleguide/color';
+
+const {width, height} = Dimensions.get('screen');
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.cream,
   },
-  parent: {
-    height: '65%',
-    width: '100%',
-    transform: [{scaleX: 2}],
-    borderBottomStartRadius: scale(200),
-    borderBottomEndRadius: scale(200),
-    overflow: 'hidden',
-  },
-  child: {
+  mainView: {
     flex: 1,
-    transform: [{scaleX: 0.5}],
-    backgroundColor: colors.red,
-    justifyContent: 'center',
+    backgroundColor: colors.cream,
+    minHeight: height,
+  },
+  mainDarkLayer: {
+    width: width,
+    height: height / 1.1,
+    backgroundColor: colors.darkRed,
+    bottom: height / 2.2,
+    borderRadius: height / 2,
+    transform: [{scaleX: 2}, {scaleY: 1}],
+  },
+  middleLayer: {
+    position: 'absolute',
+    width: width,
+    height: height / 1.1,
+    backgroundColor: colors.middleRed,
+    zIndex: 2,
+    borderRadius: height / 2,
+  },
+  thirdLayer: {
+    position: 'absolute',
+    width: width,
+    height: height / 1.12,
+    backgroundColor: colors.lightRed,
+    zIndex: 3,
+    borderRadius: height / 2,
   },
   loginButton: {
     backgroundColor: colors.buttonColor,
@@ -34,14 +50,13 @@ export const styles = StyleSheet.create({
     color: colors.cream,
   },
   bottomContainer: {
-    backgroundColor: colors.cream,
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
   },
   textContainer: {
     marginHorizontal: scale(20),
-    width: '90%',
+    flex: 1,
+    justifyContent: 'center',
   },
   title: {
     fontSize: scale(30),
@@ -71,17 +86,20 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
   },
   textFieldContainer: {
-    backgroundColor: colors.cream,
+    backgroundColor: colors.white,
     height: scale(65),
     justifyContent: 'flex-end',
     borderRadius: scale(5),
-    alignItems: 'center',
+    alignSelf: 'center',
     marginTop: scale(20),
+    width: '100%',
   },
   textfield: {
     marginBottom: scale(5),
     width: '90%',
-    backgroundColor: colors.cream,
+    backgroundColor: colors.white,
+    alignSelf: 'center',
+    color: colors.black,
   },
   middle: {
     color: colors.buttonColor,
@@ -90,7 +108,8 @@ export const styles = StyleSheet.create({
   },
   forgotContainer: {
     flexDirection: 'row',
-    marginTop: scale(20),
+    marginTop: scale(5),
+    alignSelf: 'center',
   },
   enable: {
     marginTop: scale(10),

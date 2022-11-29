@@ -8,7 +8,7 @@ const Details = () => {
   const {data} = store.getState().User;
   return (
     <View style={styles.container}>
-      <Text style={styles.textStyle}>User ID: {data?.user_id}</Text>
+      <Text style={styles.textStyle}>User ID: {data?.userId}</Text>
       <Text style={styles.textStyle}>Device Ip: {data?.device_ipAddress}</Text>
       <Text style={styles.textStyle}>
         Device Manufacturer: {data?.device_manufacturer}
